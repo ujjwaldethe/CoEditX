@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true, // Allows TypeScript to include .js files
+    "checkJs": false // Prevents TypeScript from type-checking .js files
+  },
+  "include": ["vite.config.js"] // Ensure this file exists and has correct content
+}
