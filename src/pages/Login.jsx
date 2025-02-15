@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import GenerateIdModal from "@/components/GenerateIdModal";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [roomId, setRoomId] = useState("");
   const [email, setEmail] = useState("");
   return (
@@ -38,7 +41,10 @@ export default function Login() {
             />
           </div>
 
-          <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-md transition-colors">
+          <Button
+            className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-md transition-colors"
+            onClick={() => navigate(`/editor/${roomId}`)}
+          >
             Join
           </Button>
 
