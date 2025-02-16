@@ -43,7 +43,7 @@ export default function Settings({
   setFontSize,
 }) {
   return (
-    <div className="w-64 bg-[#252526] p-4 border-r border-gray-800">
+    <div className="w-64 h-full bg-[#252526] p-4 border-r border-gray-800">
       <h2 className="text-sm font-semibold mb-6 text-gray-400">SETTINGS</h2>
 
       <div className="space-y-6">
