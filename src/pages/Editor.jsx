@@ -101,13 +101,13 @@ export default function CodeEditor() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen bg-[#1e1e1e] text-gray-300 flex">
+      <div className="h-screen bg-[#1e1e1e] text-gray-300 flex max-w-screen">
         {/* Sidebar */}
-        <div className="w-16 bg-[#252526] flex flex-col items-center py-4 border-r border-gray-800">
+        <div className="w-16 p-3 bg-[#252526] flex flex-col items-center gap-3 pt-4 border-r border-gray-800">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`p-3 hover:bg-[#2d2d2d] rounded-lg mb-4 ${
+                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
                   activePanel === "files" ? "bg-[#2d2d2d]" : ""
                 }`}
                 onClick={() => togglePanel("files")}
@@ -122,7 +122,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className="p-3 hover:bg-[#2d2d2d] rounded-lg mb-4"
+                className="hover:bg-[#2d2d2d] rounded-lg p-3"
                 onClick={runCode}
               >
                 <Play className="w-5 h-5" />
@@ -135,7 +135,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`p-3 hover:bg-[#2d2d2d] rounded-lg mb-4 ${
+                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
                   activePanel === "settings" ? "bg-[#2d2d2d]" : ""
                 }`}
                 onClick={() => togglePanel("settings")}
@@ -148,78 +148,90 @@ export default function CodeEditor() {
             </TooltipContent>
           </Tooltip>
           <div className="mt-auto">
-            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg mb-4">
+            <button
+              className="p-3 hover:bg-[#2d2d2d] rounded-lg"
+              title="Download"
+            >
               <Download className="w-5 h-5" />
             </button>
-            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg">
+            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg" title="User">
               <User className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Side Panel (File Explorer or Settings) */}
-        {activePanel === "files" && (
-          <FileExplorer
-            fileTree={fileTree}
-            setFileTree={setFileTree}
-            activeFile={activeFile}
-            setActiveFile={setActiveFile}
-          />
-        )}
-        {activePanel === "settings" && (
-          <Settings
-            language={language}
-            setLanguage={setLanguage}
-            theme={theme}
-            setTheme={setTheme}
-            font={font}
-            setFont={setFont}
-            fontSize={fontSize}
-            setFontSize={setFontSize}
-          />
-        )}
-
-        {/* Main Editor Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Tab Bar */}
-          <div className="h-9 bg-[#252526] flex items-center px-4 border-b border-gray-800">
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 bg-[#1e1e1e]">
-              <File className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">{activeFile?.name}</span>
+        <div className="flex-1 grid grid-cols-6">
+          {activePanel !== "none" && (
+            <div className="col-span-1">
+              {activePanel === "files" && (
+                <FileExplorer
+                  fileTree={fileTree}
+                  setFileTree={setFileTree}
+                  activeFile={activeFile}
+                  setActiveFile={setActiveFile}
+                />
+              )}
+              {activePanel === "settings" && (
+                <Settings
+                  language={language}
+                  setLanguage={setLanguage}
+                  theme={theme}
+                  setTheme={setTheme}
+                  font={font}
+                  setFont={setFont}
+                  fontSize={fontSize}
+                  setFontSize={setFontSize}
+                />
+              )}
             </div>
-          </div>
+          )}
 
-          {/* Editor Content */}
-          <div className="flex-1">
-            <Editor
-              height="100%"
-              language={language}
-              theme={theme}
-              value={activeFile?.content}
-              onChange={handleEditorChange}
-              onMount={handleEditorDidMount}
-              options={{
-                fontSize: fontSize,
-                fontFamily: font,
-                minimap: { enabled: true },
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                tabSize: 2,
-                wordWrap: "on",
-                lineNumbers: "on",
-                folding: true,
-                foldingHighlight: true,
-                formatOnPaste: true,
-                formatOnType: true,
-              }}
-            />
-          </div>
+          {/* Main Editor Area */}
+          <div
+            className={`flex flex-col ${
+              activePanel === "none" ? "col-span-6" : "col-span-5"
+            }`}
+          >
+            {/* Tab Bar */}
+            <div className="h-9 bg-[#252526] flex items-center px-4 border-b border-gray-800">
+              <div className="flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 bg-[#1e1e1e]">
+                <File className="h-4 w-4 text-gray-400" />
+                <span className="text-sm">{activeFile?.name}</span>
+              </div>
+            </div>
 
-          {/* Output Console */}
-          <div className="h-32 bg-[#1e1e1e] border-t border-gray-800">
-            <div className="bg-[#252526] px-4 py-2 text-sm">Output</div>
-            <div className="p-4 text-sm font-mono whitespace-pre-wrap">
-              {output || "// Run your code to see output here"}
+            {/* Editor Content */}
+            <div className="flex-1">
+              <Editor
+                height="100%"
+                language={language}
+                theme={theme}
+                value={activeFile?.content}
+                onChange={handleEditorChange}
+                onMount={handleEditorDidMount}
+                options={{
+                  fontSize: fontSize,
+                  fontFamily: font,
+                  minimap: { enabled: true },
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
+                  wordWrap: "on",
+                  lineNumbers: "on",
+                  folding: true,
+                  foldingHighlight: true,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                }}
+              />
+            </div>
+
+            {/* Output Console */}
+            <div className="h-32 bg-[#1e1e1e] border-t border-gray-800">
+              <div className="bg-[#252526] px-4 py-2 text-sm">Output</div>
+              <div className="p-4 text-sm font-mono whitespace-pre-wrap">
+                {output || "// Run your code to see output here"}
+              </div>
             </div>
           </div>
         </div>
