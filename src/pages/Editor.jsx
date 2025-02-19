@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import FileExplorer from "@/components/FileExplorer";
 import Settings from "@/components/Settings";
+import axios from "axios";
 
 const initialCode = `function sayHi() {
   console.log("Hello world");
@@ -47,32 +48,75 @@ export default function CodeEditor() {
   const [output, setOutput] = useState("");
   const editorRef = useRef(null);
 
-  // Editor settings state
   const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
-  const [language, setLanguage] = useState("javascript");
+  const [language, setLanguage] = useState({
+    label: "Java",
+    language: "java",
+    version: "15.0.2",
+  });
   const [theme, setTheme] = useState("vs-dark");
   const [font, setFont] = useState("Fira Code");
   const [fontSize, setFontSize] = useState(14);
+
+  const languagesWithConfig = [
+    {
+      label: "JavaScript",
+      language: "javascript",
+      version: "18.15.0",
+    },
+    {
+      label: "Python",
+      language: "python",
+      version: "3.10.0",
+    },
+    {
+      label: "Java",
+      language: "java",
+      version: "15.0.2",
+    },
+    {
+      label: "C++",
+      language: "cpp",
+      version: "10.2.0",
+    },
+    {
+      label: "C",
+      language: "c",
+      version: "10.2.0",
+    },
+  ];
 
   function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
   }
 
-  function runCode() {
+  async function runCode() {
     const code = editorRef.current.getValue();
-    try {
-      const fn = new Function(code);
-      const originalLog = console.log;
-      let output = [];
-      console.log = (...args) => {
-        output.push(args.join(" "));
-      };
+    console.log(language);
+    const codeResponse = await axios.post(
+      "https://emkc.org/api/v2/piston/execute",
+      {
+        language: language.language,
+        version: language.version,
+        files: [
+          {
+            content: code,
+          },
+        ],
+      }
+    );
+    const result = codeResponse.data;
+    if (result.run) {
+      const output = [
+        result.run.output ? `Output: ${result.run.output}` : "",
+        result.run.stderr ? `Error: ${result.run.stderr}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
 
-      fn();
-      console.log = originalLog;
-      setOutput(output.join("\n"));
-    } catch (error) {
-      setOutput(`Error: ${error.message}`);
+      setOutput(output);
+    } else {
+      setOutput("Error: Failed to execute code");
     }
   }
 
@@ -175,6 +219,7 @@ export default function CodeEditor() {
                 <Settings
                   language={language}
                   setLanguage={setLanguage}
+                  languages={languagesWithConfig}
                   theme={theme}
                   setTheme={setTheme}
                   font={font}
@@ -227,7 +272,7 @@ export default function CodeEditor() {
             </div>
 
             {/* Output Console */}
-            <div className="h-32 bg-[#1e1e1e] border-t border-gray-800">
+            <div className="h-32 bg-[#1e1e1e] border-t border-gray-800 overflow-y-auto">
               <div className="bg-[#252526] px-4 py-2 text-sm">Output</div>
               <div className="p-4 text-sm font-mono whitespace-pre-wrap">
                 {output || "// Run your code to see output here"}

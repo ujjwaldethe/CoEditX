@@ -8,15 +8,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
-const languages = [
-  { value: "javascript", label: "JavaScript" },
-  { value: "typescript", label: "TypeScript" },
-  { value: "python", label: "Python" },
-  { value: "java", label: "Java" },
-  { value: "cpp", label: "C++" },
-  { value: "csharp", label: "C#" },
-];
-
 const themes = [
   { value: "vs-dark", label: "Dark (VS Code)" },
   { value: "light", label: "Light" },
@@ -35,6 +26,7 @@ const fonts = [
 export default function Settings({
   language,
   setLanguage,
+  languages,
   theme,
   setTheme,
   font,
@@ -50,15 +42,25 @@ export default function Settings({
         {/* Language Setting */}
         <div className="space-y-2">
           <Label className="text-xs text-gray-400">Language</Label>
-          <Select value={language} onValueChange={setLanguage}>
+          <Select
+            value={language.label}
+            onValueChange={(value) => {
+              const selectedLang = languages.find(
+                (lang) => lang.label === value
+              );
+              if (selectedLang) {
+                setLanguage(selectedLang);
+              }
+            }}
+          >
             <SelectTrigger className="w-full bg-[#3c3c3c] border-none text-gray-300">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
               {languages.map((lang) => (
                 <SelectItem
-                  key={lang.value}
-                  value={lang.value}
+                  key={lang.label}
+                  value={lang.label}
                   className="text-gray-300"
                 >
                   {lang.label}
