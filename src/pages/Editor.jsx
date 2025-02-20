@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   FolderClosed,
   User,
@@ -18,12 +18,17 @@ import FileExplorer from "@/components/FileExplorer";
 import Settings from "@/components/Settings";
 import axios from "axios";
 
-const initialCode = `function sayHi() {
-  console.log("Hello world");
-}
-sayHi();
+const initialCode = `public class Main {
+    public static void main(String[] args) {
+        sayHi();
+    }
 
-// Write your code here
+    // Method to print "Hello world"
+    public static void sayHi() {
+        System.out.println("Hello world!");
+    }
+}
+    // Write your code here
 `;
 
 export default function CodeEditor() {
@@ -47,8 +52,9 @@ export default function CodeEditor() {
   });
   const [output, setOutput] = useState("");
   const editorRef = useRef(null);
-
-  const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
+  const wsRef = useRef(null);
+  const [wsOutput, setWsOutput] = useState("")
+  
   const [language, setLanguage] = useState({
     label: "Java",
     language: "java",
@@ -57,38 +63,56 @@ export default function CodeEditor() {
   const [theme, setTheme] = useState("vs-dark");
   const [font, setFont] = useState("Fira Code");
   const [fontSize, setFontSize] = useState(14);
+  const [activePanel, setActivePanel] = useState("none");
+
+
 
   const languagesWithConfig = [
-    {
-      label: "JavaScript",
-      language: "javascript",
-      version: "18.15.0",
-    },
-    {
-      label: "Python",
-      language: "python",
-      version: "3.10.0",
-    },
     {
       label: "Java",
       language: "java",
       version: "15.0.2",
     },
     {
-      label: "C++",
-      language: "cpp",
-      version: "10.2.0",
-    },
-    {
-      label: "C",
-      language: "c",
-      version: "10.2.0",
-    },
+      label: "Python",
+      language: "python",
+      version: "3.10.8",
+    }
   ];
 
-  function handleEditorDidMount(editor, monaco) {
+  const pathSegments = window.location.pathname.split('/');
+  const roomId = pathSegments[pathSegments.length - 1];
+  // Create a ref to hold the WebSocket conne
+  useEffect(() => {
+    // Connect to WebSocket
+    wsRef.current = new WebSocket(`ws://localhost:8000/ws/${roomId}`);
+
+    wsRef.current.onopen = () => {
+      console.info('Connected to collaborative session');
+    };
+
+    wsRef.current.onclose = () => {
+      console.warn('Disconnected from collaborative session');
+      // Optionally, implement reconnection logic
+    };
+
+    wsRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'content_update') {
+        setActiveFile((prev) => ({ ...prev, content: data.content }));
+      } else if (data.type === 'output') {
+        setWsOutput(data.message);
+      }
+    };
+    return () => {
+      wsRef.current.close();
+    };
+  }, []);
+
+
+  const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
-  }
+  };
 
   async function runCode() {
     const code = editorRef.current.getValue();
@@ -115,8 +139,21 @@ export default function CodeEditor() {
         .join("\n");
 
       setOutput(output);
+       // Send output to WebSocket
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'output',
+        message: output, // Send the output message to the WebSocket server
+      }));
+    }
     } else {
       setOutput("Error: Failed to execute code");
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'output',
+          message: errorMessage, // Send the error message to the WebSocket server
+        }));
+      }
     }
   }
 
@@ -137,6 +174,14 @@ export default function CodeEditor() {
     };
 
     setFileTree(updateTree(fileTree));
+
+    // Send the updated content to the WebSocket server
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'content_update',
+        content: value,
+      }));
+    }
   };
 
   const togglePanel = (panelName) => {
@@ -151,9 +196,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
-                  activePanel === "files" ? "bg-[#2d2d2d]" : ""
-                }`}
+                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${activePanel === "files" ? "bg-[#2d2d2d]" : ""}`}
                 onClick={() => togglePanel("files")}
               >
                 <FolderClosed className="w-5 h-5" />
@@ -179,9 +222,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
-                  activePanel === "settings" ? "bg-[#2d2d2d]" : ""
-                }`}
+                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${activePanel === "settings" ? "bg-[#2d2d2d]" : ""}`}
                 onClick={() => togglePanel("settings")}
               >
                 <SettingsIcon className="w-5 h-5" />
@@ -192,10 +233,7 @@ export default function CodeEditor() {
             </TooltipContent>
           </Tooltip>
           <div className="mt-auto">
-            <button
-              className="p-3 hover:bg-[#2d2d2d] rounded-lg"
-              title="Download"
-            >
+            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg" title="Download">
               <Download className="w-5 h-5" />
             </button>
             <button className="p-3 hover:bg-[#2d2d2d] rounded-lg" title="User">
@@ -232,11 +270,7 @@ export default function CodeEditor() {
           )}
 
           {/* Main Editor Area */}
-          <div
-            className={`flex flex-col ${
-              activePanel === "none" ? "col-span-6" : "col-span-5"
-            }`}
-          >
+          <div className={`flex flex-col ${activePanel === "none" ? "col-span-6" : "col-span-5"}`}>
             {/* Tab Bar */}
             <div className="h-9 bg-[#252526] flex items-center px-4 border-b border-gray-800">
               <div className="flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 bg-[#1e1e1e]">
@@ -249,7 +283,7 @@ export default function CodeEditor() {
             <div className="flex-1">
               <Editor
                 height="100%"
-                language={language}
+                language={language.language}
                 theme={theme}
                 value={activeFile?.content}
                 onChange={handleEditorChange}
@@ -276,6 +310,7 @@ export default function CodeEditor() {
               <div className="bg-[#252526] px-4 py-2 text-sm">Output</div>
               <div className="p-4 text-sm font-mono whitespace-pre-wrap">
                 {output || "// Run your code to see output here"}
+                {wsOutput && <div>{wsOutput}</div>}
               </div>
             </div>
           </div>
