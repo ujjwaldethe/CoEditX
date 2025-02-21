@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import {
   FolderClosed,
-  User,
   Play,
   Download,
   Settings as SettingsIcon,
   File,
+  MessageSquare,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import {
@@ -17,6 +17,7 @@ import {
 import FileExplorer from "@/components/FileExplorer";
 import Settings from "@/components/Settings";
 import axios from "axios";
+import Chat from "@/components/Chat";
 
 const initialCode = `public class Main {
     public static void main(String[] args) {
@@ -53,8 +54,8 @@ export default function CodeEditor() {
   const [output, setOutput] = useState("");
   const editorRef = useRef(null);
   const wsRef = useRef(null);
-  const [wsOutput, setWsOutput] = useState("")
-  
+  const [wsOutput, setWsOutput] = useState("");
+
   const [language, setLanguage] = useState({
     label: "Java",
     language: "java",
@@ -63,9 +64,8 @@ export default function CodeEditor() {
   const [theme, setTheme] = useState("vs-dark");
   const [font, setFont] = useState("Fira Code");
   const [fontSize, setFontSize] = useState(14);
-  const [activePanel, setActivePanel] = useState("none");
-
-
+  const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const languagesWithConfig = [
     {
@@ -77,10 +77,10 @@ export default function CodeEditor() {
       label: "Python",
       language: "python",
       version: "3.10.8",
-    }
+    },
   ];
 
-  const pathSegments = window.location.pathname.split('/');
+  const pathSegments = window.location.pathname.split("/");
   const roomId = pathSegments[pathSegments.length - 1];
   // Create a ref to hold the WebSocket conne
   useEffect(() => {
@@ -88,19 +88,19 @@ export default function CodeEditor() {
     wsRef.current = new WebSocket(`ws://localhost:8000/ws/${roomId}`);
 
     wsRef.current.onopen = () => {
-      console.info('Connected to collaborative session');
+      console.info("Connected to collaborative session");
     };
 
     wsRef.current.onclose = () => {
-      console.warn('Disconnected from collaborative session');
+      console.warn("Disconnected from collaborative session");
       // Optionally, implement reconnection logic
     };
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'content_update') {
+      if (data.type === "content_update") {
         setActiveFile((prev) => ({ ...prev, content: data.content }));
-      } else if (data.type === 'output') {
+      } else if (data.type === "output") {
         setWsOutput(data.message);
       }
     };
@@ -109,14 +109,12 @@ export default function CodeEditor() {
     };
   }, []);
 
-
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
   };
 
   async function runCode() {
     const code = editorRef.current.getValue();
-    console.log(language);
     const codeResponse = await axios.post(
       "https://emkc.org/api/v2/piston/execute",
       {
@@ -139,20 +137,24 @@ export default function CodeEditor() {
         .join("\n");
 
       setOutput(output);
-       // Send output to WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'output',
-        message: output, // Send the output message to the WebSocket server
-      }));
-    }
+      // Send output to WebSocket
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            type: "output",
+            message: output, // Send the output message to the WebSocket server
+          })
+        );
+      }
     } else {
       setOutput("Error: Failed to execute code");
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'output',
-          message: errorMessage, // Send the error message to the WebSocket server
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: "output",
+            message: "Error: Failed to execute code", // Send the error message to the WebSocket server
+          })
+        );
       }
     }
   }
@@ -177,10 +179,12 @@ export default function CodeEditor() {
 
     // Send the updated content to the WebSocket server
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'content_update',
-        content: value,
-      }));
+      wsRef.current.send(
+        JSON.stringify({
+          type: "content_update",
+          content: value,
+        })
+      );
     }
   };
 
@@ -196,7 +200,9 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${activePanel === "files" ? "bg-[#2d2d2d]" : ""}`}
+                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
+                  activePanel === "files" ? "bg-[#2d2d2d]" : ""
+                }`}
                 onClick={() => togglePanel("files")}
               >
                 <FolderClosed className="w-5 h-5" />
@@ -204,6 +210,19 @@ export default function CodeEditor() {
             </TooltipTrigger>
             <TooltipContent>
               <p>File Explorer</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="hover:bg-[#2d2d2d] rounded-lg p-3"
+                onClick={() => setIsChatOpen((prev) => !prev)}
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Chat</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -219,32 +238,38 @@ export default function CodeEditor() {
               <p>Run Code</p>
             </TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${activePanel === "settings" ? "bg-[#2d2d2d]" : ""}`}
-                onClick={() => togglePanel("settings")}
-              >
-                <SettingsIcon className="w-5 h-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Settings</p>
-            </TooltipContent>
-          </Tooltip>
-          <div className="mt-auto">
-            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg" title="Download">
-              <Download className="w-5 h-5" />
-            </button>
-            <button className="p-3 hover:bg-[#2d2d2d] rounded-lg" title="User">
-              <User className="w-5 h-5" />
-            </button>
+          <div className="mt-auto space-y-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="hover:bg-[#2d2d2d] rounded-lg p-3">
+                  <Download className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Download</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
+                    activePanel === "settings" ? "bg-[#2d2d2d]" : ""
+                  }`}
+                  onClick={() => togglePanel("settings")}
+                >
+                  <SettingsIcon className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-6">
+        <div className="flex-1 grid grid-cols-10">
           {activePanel !== "none" && (
-            <div className="col-span-1">
+            <div className="col-span-2">
               {activePanel === "files" && (
                 <FileExplorer
                   fileTree={fileTree}
@@ -270,7 +295,17 @@ export default function CodeEditor() {
           )}
 
           {/* Main Editor Area */}
-          <div className={`flex flex-col ${activePanel === "none" ? "col-span-6" : "col-span-5"}`}>
+          <div
+            className={`flex flex-col ${
+              activePanel === "none"
+                ? isChatOpen
+                  ? "col-span-7"
+                  : "col-span-10"
+                : isChatOpen
+                ? "col-span-5"
+                : "col-span-8"
+            }`}
+          >
             {/* Tab Bar */}
             <div className="h-9 bg-[#252526] flex items-center px-4 border-b border-gray-800">
               <div className="flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 bg-[#1e1e1e]">
@@ -314,6 +349,13 @@ export default function CodeEditor() {
               </div>
             </div>
           </div>
+
+          {/* Chat */}
+          {isChatOpen && (
+            <div className="col-span-3 border-l border-gray-800">
+              <Chat />
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>

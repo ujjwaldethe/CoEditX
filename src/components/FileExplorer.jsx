@@ -196,7 +196,7 @@ export default function FileExplorer({
   }
 
   return (
-    <div className="w-64 h-full  bg-[#252526] p-4 border-r border-gray-800">
+    <div className="w-full h-full  bg-[#252526] p-4 border-r border-gray-800">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-gray-400">FILES</h2>
         <div className="flex space-x-2">
