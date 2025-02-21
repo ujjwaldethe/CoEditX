@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import JSZip from "jszip";
 import {
   FolderClosed,
   Play,
@@ -192,6 +193,38 @@ export default function CodeEditor() {
     setActivePanel((prev) => (prev === panelName ? "none" : panelName));
   };
 
+  const addToZip = (item, zip, parentPath = "") => {
+    const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+
+    if (item.type === "file") {
+      zip.file(currentPath, item.content);
+    } else if (item.type === "folder") {
+      zip.folder(currentPath);
+      item.children?.forEach((child) => addToZip(child, zip, currentPath));
+    }
+  };
+
+  async function handleDownload() {
+    const zip = new JSZip();
+    addToZip(fileTree, zip);
+    const content = await zip.generateAsync({
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: {
+        level: 9,
+      },
+    });
+    const url = window.URL.createObjectURL(content);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "code-editor.zip";
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  }
+
   return (
     <TooltipProvider>
       <div className="h-screen bg-[#1e1e1e] text-gray-300 flex max-w-screen">
@@ -241,7 +274,10 @@ export default function CodeEditor() {
           <div className="mt-auto space-y-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="hover:bg-[#2d2d2d] rounded-lg p-3">
+                <button
+                  className="hover:bg-[#2d2d2d] rounded-lg p-3"
+                  onClick={handleDownload}
+                >
                   <Download className="w-5 h-5" />
                 </button>
               </TooltipTrigger>
