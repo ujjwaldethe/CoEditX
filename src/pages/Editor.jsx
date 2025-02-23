@@ -333,6 +333,7 @@ export default function CodeEditor() {
                   setFileTree={setFileTree}
                   activeFile={activeFile}
                   setActiveFile={setActiveFile}
+                  theme={theme}
                 />
               )}
               {activePanel === "settings" && (

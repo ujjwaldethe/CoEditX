@@ -34,11 +34,28 @@ export default function FileExplorer({
   setFileTree,
   activeFile,
   setActiveFile,
+  theme,
 }) {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newItemType, setNewItemType] = useState(null);
   const [newItemParentPath, setNewItemParentPath] = useState("/");
   const [newItemName, setNewItemName] = useState("");
+
+  const isDark = theme === "vs-dark" || theme === "hc-black";
+
+  const colors = {
+    text: isDark ? "text-gray-300" : "text-gray-800",
+    textMuted: isDark ? "text-gray-400" : "text-gray-500",
+    background: isDark ? "bg-[#1e1e1e]" : "bg-white",
+    hover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-100",
+    buttonHover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-200",
+    border: isDark ? "border-gray-700" : "border-gray-200",
+    dialogBg: isDark ? "bg-[#252526]" : "bg-white",
+    buttonPrimary: "bg-blue-500 hover:bg-blue-600 text-white",
+    inputBg: isDark ? "bg-[#3c3c3c]" : "bg-white",
+    inputBorder: isDark ? "border-gray-600" : "border-gray-300",
+    inputText: isDark ? "text-gray-300" : "text-gray-900",
+  };
 
   function addItem(parentPath, name, type) {
     if (!name) return;
@@ -198,13 +215,13 @@ export default function FileExplorer({
   return (
     <div className="w-full h-full">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-gray-400">FILES</h2>
+        <h2 className={`${colors.textMuted} text-sm font-semibold`}>FILES</h2>
         <div className="flex space-x-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-1 hover:bg-[#2d2d2d] rounded"
+                  className={`p-1 rounded ${colors.buttonHover}`}
                   onClick={() => {
                     setNewItemType("file");
                     setNewItemParentPath("/");
@@ -212,7 +229,7 @@ export default function FileExplorer({
                     setNewItemName("");
                   }}
                 >
-                  <FilePlus className="h-4 w-4 text-gray-400" />
+                  <FilePlus className={`h-4 w-4 ${colors.textMuted}`} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -224,7 +241,7 @@ export default function FileExplorer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="p-1 hover:bg-[#2d2d2d] rounded"
+                  className={`p-1 rounded ${colors.buttonHover}`}
                   onClick={() => {
                     setNewItemType("folder");
                     setNewItemParentPath("/");
@@ -232,7 +249,7 @@ export default function FileExplorer({
                     setNewItemName("");
                   }}
                 >
-                  <FolderPlus className="h-4 w-4 text-gray-400" />
+                  <FolderPlus className={`h-4 w-4 ${colors.textMuted}`} />
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -244,14 +261,17 @@ export default function FileExplorer({
       </div>
 
       <Dialog open={isCreatingNew} onOpenChange={setIsCreatingNew}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent
+          className={`sm:max-w-[425px] ${colors.dialogBg} ${colors.text} border ${colors.border}`}
+        >
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={colors.text}>
               Create New {newItemType === "file" ? "File" : "Folder"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Input
+              className={`${colors.inputBg} ${colors.inputText} border ${colors.inputBorder}`}
               placeholder={`Enter ${newItemType} name...`}
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
@@ -267,7 +287,7 @@ export default function FileExplorer({
           </div>
           <DialogFooter>
             <button
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className={`px-4 py-2 rounded ${colors.buttonPrimary}`}
               onClick={() =>
                 addItem(newItemParentPath, newItemName, newItemType)
               }
@@ -286,6 +306,7 @@ export default function FileExplorer({
           onDelete={deleteItem}
           onRename={renameItem}
           activeFile={activeFile}
+          isDark={isDark}
         />
       </div>
     </div>
@@ -300,11 +321,26 @@ const FileExplorerItem = ({
   onDelete,
   onRename,
   activeFile,
+  isDark,
 }) => {
   const isFolder = item.type === "folder";
   const isActive = activeFile?.path === item.path;
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(item.name);
+
+  const colors = {
+    text: isDark ? "text-gray-300" : "text-gray-800",
+    textMuted: isDark ? "text-gray-400" : "text-gray-500",
+    hover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-100",
+    active: isDark ? "bg-[#2d2d2d]" : "bg-gray-200",
+    buttonHover: isDark ? "hover:bg-[#3d3d3d]" : "hover:bg-gray-200",
+    inputBg: isDark ? "bg-[#3d3d3d]" : "bg-gray-100",
+    contextMenuBg: isDark ? "bg-[#252526]" : "bg-white",
+    contextMenuHover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-100",
+    contextMenuBorder: isDark ? "border-gray-700" : "border-gray-200",
+    contextMenuText: isDark ? "text-gray-300" : "text-gray-800",
+    contextMenuTextMuted: isDark ? "text-gray-500" : "text-gray-400",
+  };
 
   const handleRename = () => {
     if (newName && newName !== item.name) {
@@ -345,35 +381,35 @@ const FileExplorerItem = ({
       <ContextMenuTrigger>
         <div>
           <div
-            className={`group flex items-center space-x-2 p-1 hover:bg-[#2d2d2d] rounded cursor-pointer ${
-              isActive ? "bg-[#2d2d2d]" : ""
-            }`}
+            className={`group flex items-center space-x-2 p-1 ${
+              colors.hover
+            } rounded cursor-pointer ${isActive ? colors.active : ""}`}
             style={{ paddingLeft: `${level * 16}px` }}
             onClick={() => !isFolder && onSelect(item)}
           >
             {isFolder && (
               <button
-                className="p-0.5 hover:bg-[#3d3d3d] rounded"
+                className={`p-0.5 rounded cursor-pointer ${colors.buttonHover}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(item);
                 }}
               >
                 {item.isOpen ? (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className={`h-4 w-4 ${colors.textMuted}`} />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <ChevronRight className={`h-4 w-4 ${colors.textMuted}`} />
                 )}
               </button>
             )}
             {isFolder ? (
-              <FolderClosed className="h-4 w-4 text-gray-400" />
+              <FolderClosed className={`h-4 w-4 ${colors.textMuted}`} />
             ) : (
-              <File className="h-4 w-4 text-gray-400" />
+              <File className={`h-4 w-4 ${colors.textMuted}`} />
             )}
             {isRenaming ? (
               <Input
-                className="h-6 py-0 px-1 bg-[#3d3d3d] border-none focus-visible:ring-1 focus-visible:ring-blue-500"
+                className={`h-6 py-0 px-1 ${colors.inputBg} ${colors.text} border-none focus-visible:ring-1 focus-visible:ring-blue-500`}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onBlur={handleRename}
@@ -382,7 +418,9 @@ const FileExplorerItem = ({
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <span className="text-sm flex-1">{item.name}</span>
+              <span className={`text-sm flex-1 ${colors.text}`}>
+                {item.name}
+              </span>
             )}
           </div>
           {isFolder &&
@@ -397,23 +435,31 @@ const FileExplorerItem = ({
                 onDelete={onDelete}
                 onRename={onRename}
                 activeFile={activeFile}
+                isDark={isDark}
               />
             ))}
         </div>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
+      <ContextMenuContent
+        className={`w-48 ${colors.contextMenuBg} ${colors.contextMenuText} border ${colors.contextMenuBorder}`}
+      >
         {contextMenuItems.map((item, index) =>
           item.type === "separator" ? (
-            <ContextMenuSeparator key={index} />
+            <ContextMenuSeparator
+              key={index}
+              className={colors.contextMenuBorder}
+            />
           ) : (
             <ContextMenuItem
               key={index}
               onClick={item.action}
-              className="flex justify-between"
+              className={`flex justify-between ${colors.contextMenuHover}`}
             >
               <span>{item.label}</span>
               {item.shortcut && (
-                <span className="text-xs text-gray-500">{item.shortcut}</span>
+                <span className={`text-xs ${colors.contextMenuTextMuted}`}>
+                  {item.shortcut}
+                </span>
               )}
             </ContextMenuItem>
           )
