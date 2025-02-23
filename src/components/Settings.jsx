@@ -34,14 +34,27 @@ export default function Settings({
   fontSize,
   setFontSize,
 }) {
+  const isDark = theme === "vs-dark" || theme === "hc-black";
+
+  const colors = {
+    text: isDark ? "text-gray-300" : "text-gray-800",
+    textMuted: isDark ? "text-gray-400" : "text-gray-500",
+    background: isDark ? "bg-[#3c3c3c]" : "bg-gray-100",
+    selectBackground: isDark ? "bg-[#3c3c3c]" : "bg-white",
+    border: isDark ? "border-gray-700" : "border-gray-200",
+    hover: isDark ? "hover:bg-[#4c4c4c]" : "hover:bg-gray-50",
+  };
+
   return (
-    <div className="w-full h-full bg-[#252526] p-4 border-r border-gray-800">
-      <h2 className="text-sm font-semibold mb-6 text-gray-400">SETTINGS</h2>
+    <div className="w-full h-full">
+      <h2 className={`text-sm font-semibold mb-6 ${colors.textMuted}`}>
+        SETTINGS
+      </h2>
 
       <div className="space-y-6">
         {/* Language Setting */}
         <div className="space-y-2">
-          <Label className="text-xs text-gray-400">Language</Label>
+          <Label className={`text-xs ${colors.textMuted}`}>Language</Label>
           <Select
             value={language.label}
             onValueChange={(value) => {
@@ -53,7 +66,9 @@ export default function Settings({
               }
             }}
           >
-            <SelectTrigger className="w-full bg-[#3c3c3c] border-none text-gray-300">
+            <SelectTrigger
+              className={`w-full ${colors.selectBackground} border-none ${colors.text}`}
+            >
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
@@ -61,7 +76,7 @@ export default function Settings({
                 <SelectItem
                   key={lang.label}
                   value={lang.label}
-                  className="text-gray-300"
+                  className="text-gray-800"
                 >
                   {lang.label}
                 </SelectItem>
@@ -72,9 +87,11 @@ export default function Settings({
 
         {/* Theme Setting */}
         <div className="space-y-2">
-          <Label className="text-xs text-gray-400">Theme</Label>
+          <Label className={`text-xs ${colors.textMuted}`}>Theme</Label>
           <Select value={theme} onValueChange={setTheme}>
-            <SelectTrigger className="w-full bg-[#3c3c3c] border-none text-gray-300">
+            <SelectTrigger
+              className={`w-full ${colors.selectBackground} border-none ${colors.text}`}
+            >
               <SelectValue placeholder="Select theme" />
             </SelectTrigger>
             <SelectContent>
@@ -82,7 +99,7 @@ export default function Settings({
                 <SelectItem
                   key={themeOption.value}
                   value={themeOption.value}
-                  className="text-gray-300"
+                  className="text-gray-800"
                 >
                   {themeOption.label}
                 </SelectItem>
@@ -93,9 +110,11 @@ export default function Settings({
 
         {/* Font Setting */}
         <div className="space-y-2">
-          <Label className="text-xs text-gray-400">Font Family</Label>
+          <Label className={`text-xs ${colors.textMuted}`}>Font Family</Label>
           <Select value={font} onValueChange={setFont}>
-            <SelectTrigger className="w-full bg-[#3c3c3c] border-none text-gray-300">
+            <SelectTrigger
+              className={`w-full ${colors.selectBackground} border-none ${colors.text}`}
+            >
               <SelectValue placeholder="Select font" />
             </SelectTrigger>
             <SelectContent>
@@ -103,7 +122,7 @@ export default function Settings({
                 <SelectItem
                   key={fontOption.value}
                   value={fontOption.value}
-                  className="text-gray-300"
+                  className="text-gray-800"
                 >
                   {fontOption.label}
                 </SelectItem>
@@ -115,8 +134,8 @@ export default function Settings({
         {/* Font Size Setting */}
         <div className="space-y-2">
           <div className="flex justify-between">
-            <Label className="text-xs text-gray-400">Font Size</Label>
-            <span className="text-xs text-gray-400">{fontSize}px</span>
+            <Label className={`text-xs ${colors.textMuted}`}>Font Size</Label>
+            <span className={`text-xs ${colors.textMuted}`}>{fontSize}px</span>
           </div>
           <Slider
             value={[fontSize]}
@@ -124,7 +143,7 @@ export default function Settings({
             min={8}
             max={32}
             step={1}
-            className="w-full"
+            className={`w-full ${colors.selectBackground}`}
           />
         </div>
       </div>

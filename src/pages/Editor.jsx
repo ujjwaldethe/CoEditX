@@ -68,6 +68,15 @@ export default function CodeEditor() {
   const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  const isDark = theme === "vs-dark" || theme === "hc-black";
+
+  const colors = {
+    background: isDark ? "bg-[#1e1e1e]" : "bg-white",
+    border: isDark ? "border-gray-800" : "border-gray-200",
+    hover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-200",
+    active: isDark ? "bg-[#2d2d2d]" : "bg-gray-200",
+  };
+
   const languagesWithConfig = [
     {
       label: "Java",
@@ -83,7 +92,7 @@ export default function CodeEditor() {
 
   const pathSegments = window.location.pathname.split("/");
   const roomId = pathSegments[pathSegments.length - 1];
-  // Create a ref to hold the WebSocket conne
+
   useEffect(() => {
     // Connect to WebSocket
     wsRef.current = new WebSocket(`ws://localhost:8000/ws/${roomId}`);
@@ -227,15 +236,23 @@ export default function CodeEditor() {
 
   return (
     <TooltipProvider>
-      <div className="h-screen bg-[#1e1e1e] text-gray-300 flex max-w-screen">
+      <div
+        className={`h-screen max-w-screen flex ${
+          isDark ? "bg-[#1e1e1e] text-gray-300" : "bg-white text-gray-800"
+        }`}
+      >
         {/* Sidebar */}
-        <div className="w-16 p-3 bg-[#252526] flex flex-col items-center gap-3 pt-4 border-r border-gray-800">
+        <div
+          className={`w-16 p-3 flex flex-col items-center gap-3 pt-4 border-r ${
+            colors.border
+          } ${isDark ? "bg-[#252526]" : "bg-gray-100"}`}
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
-                  activePanel === "files" ? "bg-[#2d2d2d]" : ""
-                }`}
+                className={`rounded-lg p-3 ${
+                  activePanel === "files" ? colors.active : ""
+                } ${colors.hover}`}
                 onClick={() => togglePanel("files")}
               >
                 <FolderClosed className="w-5 h-5" />
@@ -248,7 +265,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className="hover:bg-[#2d2d2d] rounded-lg p-3"
+                className={`rounded-lg p-3 ${colors.hover}`}
                 onClick={() => setIsChatOpen((prev) => !prev)}
               >
                 <MessageSquare className="w-5 h-5" />
@@ -261,7 +278,7 @@ export default function CodeEditor() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className="hover:bg-[#2d2d2d] rounded-lg p-3"
+                className={`rounded-lg p-3 ${colors.hover}`}
                 onClick={runCode}
               >
                 <Play className="w-5 h-5" />
@@ -275,7 +292,7 @@ export default function CodeEditor() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className="hover:bg-[#2d2d2d] rounded-lg p-3"
+                  className={`rounded-lg p-3 ${colors.hover}`}
                   onClick={handleDownload}
                 >
                   <Download className="w-5 h-5" />
@@ -288,9 +305,9 @@ export default function CodeEditor() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  className={`hover:bg-[#2d2d2d] rounded-lg p-3 ${
-                    activePanel === "settings" ? "bg-[#2d2d2d]" : ""
-                  }`}
+                  className={`rounded-lg p-3 ${
+                    activePanel === "settings" ? colors.active : ""
+                  } ${colors.hover}`}
                   onClick={() => togglePanel("settings")}
                 >
                   <SettingsIcon className="w-5 h-5" />
@@ -305,7 +322,11 @@ export default function CodeEditor() {
 
         <div className="flex-1 grid grid-cols-10">
           {activePanel !== "none" && (
-            <div className="col-span-2">
+            <div
+              className={`col-span-2 p-4 border-r ${colors.border} ${
+                isDark ? "bg-[#252526]" : "bg-gray-100"
+              }`}
+            >
               {activePanel === "files" && (
                 <FileExplorer
                   fileTree={fileTree}
@@ -343,8 +364,14 @@ export default function CodeEditor() {
             }`}
           >
             {/* Tab Bar */}
-            <div className="h-9 bg-[#252526] flex items-center px-4 border-b border-gray-800">
-              <div className="flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 bg-[#1e1e1e]">
+            <div
+              className={`h-9 flex items-center px-4 border-b ${
+                colors.border
+              } ${isDark ? "bg-[#252526]" : "bg-gray-100"}`}
+            >
+              <div
+                className={`flex items-center space-x-2 px-3 py-1 rounded-t cursor-pointer mr-2 ${colors.background}`}
+              >
                 <File className="h-4 w-4 text-gray-400" />
                 <span className="text-sm">{activeFile?.name}</span>
               </div>
@@ -377,8 +404,16 @@ export default function CodeEditor() {
             </div>
 
             {/* Output Console */}
-            <div className="h-32 bg-[#1e1e1e] border-t border-gray-800 overflow-y-auto">
-              <div className="bg-[#252526] px-4 py-2 text-sm">Output</div>
+            <div
+              className={`h-32 border-t ${colors.border} ${colors.background} overflow-y-auto`}
+            >
+              <div
+                className={`px-4 py-2 text-sm ${
+                  isDark ? "bg-[#252526]" : "bg-gray-100"
+                }`}
+              >
+                Output
+              </div>
               <div className="p-4 text-sm font-mono whitespace-pre-wrap">
                 {output || "// Run your code to see output here"}
                 {wsOutput && <div>{wsOutput}</div>}
@@ -388,7 +423,7 @@ export default function CodeEditor() {
 
           {/* Chat */}
           {isChatOpen && (
-            <div className="col-span-3 border-l border-gray-800">
+            <div className={`col-span-3 border-l ${colors.border}`}>
               <Chat />
             </div>
           )}
