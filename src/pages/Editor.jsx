@@ -425,7 +425,7 @@ export default function CodeEditor() {
           {/* Chat */}
           {isChatOpen && (
             <div className={`col-span-3 border-l ${colors.border}`}>
-              <Chat />
+              <Chat theme={theme} />
             </div>
           )}
         </div>
