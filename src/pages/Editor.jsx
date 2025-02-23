@@ -42,14 +42,14 @@ export default function CodeEditor() {
     children: [
       {
         type: "file",
-        name: "index.js",
-        path: "/index.js",
+        name: "index.java",
+        path: "/index.java",
         content: initialCode,
       },
     ],
   });
   const [activeFile, setActiveFile] = useState({
-    path: "/index.js",
+    path: "/index.java",
     content: initialCode,
   });
   const [output, setOutput] = useState("");
@@ -86,7 +86,22 @@ export default function CodeEditor() {
     {
       label: "Python",
       language: "python",
-      version: "3.10.8",
+      version: "3.10.0",
+    },
+    {
+      label: "JavaScript",
+      language: "javascript",
+      version: "18.15.0",
+    },
+    {
+      label: "C++",
+      language: "cpp",
+      version: "10.2.0",
+    },
+    {
+      label: "C",
+      language: "c",
+      version: "10.2.0",
     },
   ];
 
