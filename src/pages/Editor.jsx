@@ -7,6 +7,7 @@ import {
   Settings as SettingsIcon,
   File,
   MessageSquare,
+  Users,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import {
@@ -19,6 +20,7 @@ import FileExplorer from "@/components/FileExplorer";
 import Settings from "@/components/Settings";
 import axios from "axios";
 import Chat from "@/components/Chat";
+import Participants from "../components/Participants";
 
 const initialCode = `public class Main {
     public static void main(String[] args) {
@@ -66,7 +68,7 @@ export default function CodeEditor() {
   const [font, setFont] = useState("Fira Code");
   const [fontSize, setFontSize] = useState(14);
   const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [engagementPanel, setEngagementPanel] = useState("none"); // "none", "chat", "participants"
 
   const isDark = theme === "vs-dark" || theme === "hc-black";
 
@@ -217,6 +219,10 @@ export default function CodeEditor() {
     setActivePanel((prev) => (prev === panelName ? "none" : panelName));
   };
 
+  const toggleEngagementPanel = (panelName) => {
+    setEngagementPanel((prev) => (prev === panelName ? "none" : panelName));
+  };
+
   const addToZip = (item, zip, parentPath = "") => {
     const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
 
@@ -281,7 +287,7 @@ export default function CodeEditor() {
             <TooltipTrigger asChild>
               <button
                 className={`rounded-lg p-3 ${colors.hover}`}
-                onClick={() => setIsChatOpen((prev) => !prev)}
+                onClick={() => toggleEngagementPanel("chat")}
               >
                 <MessageSquare className="w-5 h-5" />
               </button>
@@ -301,6 +307,19 @@ export default function CodeEditor() {
             </TooltipTrigger>
             <TooltipContent>
               <p>Run Code</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className={`rounded-lg p-3 ${colors.hover}`}
+                onClick={() => toggleEngagementPanel("participants")}
+              >
+                <Users className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Participants</p>
             </TooltipContent>
           </Tooltip>
           <div className="mt-auto space-y-3">
@@ -371,10 +390,10 @@ export default function CodeEditor() {
           <div
             className={`flex flex-col ${
               activePanel === "none"
-                ? isChatOpen
+                ? engagementPanel !== "none"
                   ? "col-span-7"
                   : "col-span-10"
-                : isChatOpen
+                : engagementPanel !== "none"
                 ? "col-span-5"
                 : "col-span-8"
             }`}
@@ -438,9 +457,12 @@ export default function CodeEditor() {
           </div>
 
           {/* Chat */}
-          {isChatOpen && (
+          {engagementPanel !== "none" && (
             <div className={`col-span-3 border-l ${colors.border}`}>
-              <Chat theme={theme} />
+              {engagementPanel === "chat" && <Chat theme={theme} />}
+              {engagementPanel === "participants" && (
+                <Participants theme={theme} isHost={true} />
+              )}
             </div>
           )}
         </div>
