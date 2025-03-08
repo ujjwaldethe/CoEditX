@@ -3,12 +3,38 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import GenerateIdModal from "@/components/GenerateIdModal";
+import axios from "axios";
 
 export default function Login() {
   const navigate = useNavigate();
 
   const [roomId, setRoomId] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleJoinRoom() {
+    if (!roomId || !email) {
+      window.alert("Please enter both room ID and email");
+      return;
+    }
+
+    setLoading(true);
+    const joinResponse = await axios.post(
+      `${import.meta.env.VITE_API_ENDPOINT}/request-join-room`,
+      {
+        room_id: roomId,
+        email: email,
+      }
+    );
+
+    if (joinResponse.status === 200) {
+      navigate(`/editor/${roomId}`);
+    } else {
+      console.log("Error while joining room");
+    }
+
+    setLoading(false);
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center relative">
       <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-pink-900/20"></div>
@@ -43,9 +69,10 @@ export default function Login() {
 
           <Button
             className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-md transition-colors"
-            onClick={() => navigate(`/editor/${roomId}`)}
+            onClick={() => handleJoinRoom()}
+            disabled={loading}
           >
-            Join
+            {loading ? "Joining..." : "Join"}
           </Button>
 
           <GenerateIdModal

@@ -51,7 +51,7 @@ export default function FileExplorer({
     buttonHover: isDark ? "hover:bg-[#2d2d2d]" : "hover:bg-gray-200",
     border: isDark ? "border-gray-700" : "border-gray-200",
     dialogBg: isDark ? "bg-[#252526]" : "bg-white",
-    buttonPrimary: "bg-blue-500 hover:bg-blue-600 text-white",
+    buttonPrimary: "bg-pink-500 hover:bg-pink-600 text-white",
     inputBg: isDark ? "bg-[#3c3c3c]" : "bg-white",
     inputBorder: isDark ? "border-gray-600" : "border-gray-300",
     inputText: isDark ? "text-gray-300" : "text-gray-900",
