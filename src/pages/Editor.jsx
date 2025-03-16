@@ -8,6 +8,7 @@ import {
   File,
   MessageSquare,
   Users,
+  MonitorUp,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import {
@@ -58,6 +59,7 @@ export default function CodeEditor() {
   const editorRef = useRef(null);
   const wsRef = useRef(null);
   const [wsOutput, setWsOutput] = useState("");
+  const fileInputRef = useRef(null);
 
   const [language, setLanguage] = useState({
     label: "Java",
@@ -255,6 +257,108 @@ export default function CodeEditor() {
     document.body.removeChild(link);
   }
 
+  const openLocalFolder = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFolderSelection = async (event) => {
+    const { files } = event.target;
+    if (files.length === 0) return;
+
+    // Get the root folder name from the first file's path
+    const rootFolderName = files[0].webkitRelativePath.split("/")[0];
+
+    const newFileTree = {
+      type: "folder",
+      name: rootFolderName,
+      path: "/",
+      isOpen: true,
+      children: [],
+    };
+
+    // Process all selected files
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const filePath = file.webkitRelativePath;
+      const pathParts = filePath.split("/");
+
+      // Skip the first part (root folder name)
+      if (pathParts.length <= 1) continue;
+
+      let currentLevel = newFileTree;
+
+      // Create folders in the path if they don't exist
+      for (let j = 1; j < pathParts.length - 1; j++) {
+        const folderName = pathParts[j];
+        const folderPath = "/" + pathParts.slice(1, j + 1).join("/");
+
+        let foundFolder = currentLevel.children.find(
+          (child) => child.type === "folder" && child.name === folderName
+        );
+
+        if (!foundFolder) {
+          foundFolder = {
+            type: "folder",
+            name: folderName,
+            path: folderPath,
+            isOpen: true,
+            children: [],
+          };
+          currentLevel.children.push(foundFolder);
+        }
+
+        currentLevel = foundFolder;
+      }
+
+      // Add the file to the current folder
+      const fileName = pathParts[pathParts.length - 1];
+      const filePath2 = "/" + pathParts.slice(1).join("/");
+
+      // Read file content
+      const fileContent = await readFileContent(file);
+
+      currentLevel.children.push({
+        type: "file",
+        name: fileName,
+        path: filePath2,
+        content: fileContent,
+      });
+    }
+
+    setFileTree(newFileTree);
+
+    // Set the first file as active if there are any files
+    const firstFile = findFirstFile(newFileTree);
+    if (firstFile) {
+      setActiveFile(firstFile);
+    }
+  };
+
+  // Helper function to read file content
+  const readFileContent = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsText(file);
+    });
+  };
+
+  // Helper function to find the first file in the tree
+  const findFirstFile = (node) => {
+    if (node.type === "file") {
+      return node;
+    }
+
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        const file = findFirstFile(child);
+        if (file) return file;
+      }
+    }
+
+    return null;
+  };
+
   return (
     <TooltipProvider>
       <div
@@ -262,12 +366,35 @@ export default function CodeEditor() {
           isDark ? "bg-[#1e1e1e] text-gray-300" : "bg-white text-gray-800"
         }`}
       >
+        {/* Hidden file input for folder selection */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          webkitdirectory="true"
+          multiple
+          onChange={handleFolderSelection}
+        />
+
         {/* Sidebar */}
         <div
           className={`w-16 p-3 flex flex-col items-center gap-3 pt-4 border-r ${
             colors.border
           } ${isDark ? "bg-[#252526]" : "bg-gray-100"}`}
         >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className={`rounded-lg p-3 ${colors.hover}`}
+                onClick={openLocalFolder}
+              >
+                <MonitorUp className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Open Local Folder</p>
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
