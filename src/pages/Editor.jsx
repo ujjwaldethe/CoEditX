@@ -586,7 +586,7 @@ export default function CodeEditor() {
           {/* Chat */}
           {engagementPanel !== "none" && (
             <div className={`col-span-3 border-l ${colors.border}`}>
-              {engagementPanel === "chat" && <Chat theme={theme} />}
+              {engagementPanel === "chat" && <Chat theme={theme} roomId={roomId} userEmail={userEmail} />}
               {engagementPanel === "participants" && (
                 <Participants theme={theme} isHost={true} />
               )}
