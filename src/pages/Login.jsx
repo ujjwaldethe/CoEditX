@@ -28,6 +28,7 @@ export default function Login() {
     );
 
     if (joinResponse.status === 200) {
+      localStorage.setItem("code-editor-user-email", email);
       navigate(`/editor/${roomId}`);
     } else {
       console.log("Error while joining room");

@@ -10,11 +10,13 @@ import {
   X,
   Clock,
 } from "lucide-react";
+import axios from "axios";
 
-export default function Participants({ theme, isHost = true }) {
+export default function Participants({ theme }) {
   const isDark = theme === "vs-dark" || theme === "hc-black";
   const [roomId, setRoomId] = useState("");
   const [copied, setCopied] = useState(false);
+  const [hostEmail, setHostEmail] = useState("");
 
   const colors = {
     background: isDark ? "bg-[#1e1e1e]" : "bg-white",
@@ -43,19 +45,24 @@ export default function Participants({ theme, isHost = true }) {
     sectionBg: isDark ? "bg-[#2a2a2a]" : "bg-gray-100",
   };
 
-  // Mock participants data
-  const [participants, setParticipants] = useState([
-    { id: 1, name: "John Doe", isOnline: true, isHost: true, isYou: true },
-    { id: 2, name: "Alice Smith", isOnline: true, isHost: false },
-    { id: 3, name: "Bob Johnson", isOnline: false, isHost: false },
-    { id: 4, name: "Sarah Wilson", isOnline: true, isHost: false },
-  ]);
+  const [participants, setParticipants] = useState([]);
 
-  // Mock waiting participants
-  const [waitingParticipants, setWaitingParticipants] = useState([
-    { id: 101, name: "Mike Thompson", waitingSince: "2 min ago" },
-    { id: 102, name: "Emma Davis", waitingSince: "just now" },
-  ]);
+  const [waitingParticipants, setWaitingParticipants] = useState([]);
+
+  const userEmail = localStorage.getItem("code-editor-user-email");
+
+  async function getParticipants() {
+    const response = await axios.get(
+      `http://localhost:8000/get-room-members/${roomId}`
+    );
+    const participants = response.data.data;
+    const waitingMembers = participants.filter((p) => p.status === "pending");
+    setWaitingParticipants(waitingMembers);
+    const adminMembers = participants.filter((p) => p.status === "admin");
+    setHostEmail(adminMembers[0].email);
+    const acceptedMembers = participants.filter((p) => p.status === "accepted");
+    setParticipants([...adminMembers, ...acceptedMembers]);
+  }
 
   useEffect(() => {
     // Extract room ID from URL
@@ -68,6 +75,12 @@ export default function Participants({ theme, isHost = true }) {
     }
   }, []);
 
+  useEffect(() => {
+    getParticipants();
+    const interval = setInterval(getParticipants, 2000);
+    return () => clearInterval(interval);
+  }, [roomId]);
+
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     setCopied(true);
@@ -78,36 +91,49 @@ export default function Participants({ theme, isHost = true }) {
     window.location.href = "/";
   };
 
-  const handleKickout = (participantId) => {
-    setParticipants(participants.filter((p) => p.id !== participantId));
-  };
+  async function handleKickout(participantId) {
+    const kickoutParticipant = participants.find((p) => p.id === participantId);
+    if (kickoutParticipant) {
+      await axios.post("http://localhost:8000/kickout-member", {
+        room_id: roomId,
+        email: kickoutParticipant.email,
+      });
+      setParticipants(participants.filter((p) => p.id !== participantId));
+    }
+  }
 
-  const handleAdmit = (participantId) => {
+  async function handleAdmit(participantId) {
     const admittedParticipant = waitingParticipants.find(
       (p) => p.id === participantId
     );
     if (admittedParticipant) {
-      setParticipants([
-        ...participants,
-        {
-          id: admittedParticipant.id,
-          name: admittedParticipant.name,
-          isOnline: true,
-          isHost: false,
-          isYou: false,
-        },
-      ]);
+      await axios.post("http://localhost:8000/respond-join-request", {
+        room_id: roomId,
+        email: admittedParticipant.email,
+        accept: true,
+      });
+      setParticipants([...participants, ...admittedParticipant]);
       setWaitingParticipants(
         waitingParticipants.filter((p) => p.id !== participantId)
       );
     }
-  };
+  }
 
-  const handleReject = (participantId) => {
-    setWaitingParticipants(
-      waitingParticipants.filter((p) => p.id !== participantId)
+  async function handleReject(participantId) {
+    const rejectedParticipant = waitingParticipants.find(
+      (p) => p.id === participantId
     );
-  };
+    if (rejectedParticipant) {
+      await axios.post("http://localhost:8000/respond-join-request", {
+        room_id: roomId,
+        email: rejectedParticipant.email,
+        accept: false,
+      });
+      setWaitingParticipants(
+        waitingParticipants.filter((p) => p.id !== participantId)
+      );
+    }
+  }
 
   return (
     <div className={`w-full h-full ${colors.background} flex flex-col`}>
@@ -153,7 +179,7 @@ export default function Participants({ theme, isHost = true }) {
         </div>
 
         {/* Waiting Lobby Section (only visible to host) */}
-        {isHost && waitingParticipants.length > 0 && (
+        {hostEmail == userEmail && waitingParticipants.length > 0 && (
           <div className="mb-3">
             <div className="flex items-center justify-between">
               <div
@@ -183,10 +209,7 @@ export default function Participants({ theme, isHost = true }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`${colors.nameText} text-sm truncate`}>
-                      {participant.name}
-                    </div>
-                    <div className={`text-xs ${colors.mutedText}`}>
-                      Waiting since {participant.waitingSince}
+                      {participant.email}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -226,10 +249,12 @@ export default function Participants({ theme, isHost = true }) {
           <div
             key={participant.id}
             className={`flex items-center rounded-md ${
-              participant.isYou ? colors.activeBg : colors.panelBg
+              participant.email === userEmail ? colors.activeBg : colors.panelBg
             } 
               p-2.5 ${
-                participant.isYou ? `border ${colors.activeBorder}` : ""
+                participant.email === userEmail
+                  ? `border ${colors.activeBorder}`
+                  : ""
               }`}
           >
             <div
@@ -241,8 +266,8 @@ export default function Participants({ theme, isHost = true }) {
               <div
                 className={`${colors.nameText} text-sm truncate flex items-center`}
               >
-                {participant.name}
-                {participant.isYou && (
+                {participant.email}
+                {participant.email === userEmail && (
                   <span
                     className={`ml-1.5 text-xs px-1.5 py-0.5 rounded ${
                       isDark
@@ -254,12 +279,12 @@ export default function Participants({ theme, isHost = true }) {
                   </span>
                 )}
               </div>
-              {participant.isHost && (
+              {participant.status === "admin" && (
                 <div className={`text-xs ${colors.mutedText}`}>Host</div>
               )}
             </div>
             <div className="flex items-center gap-2 ml-2">
-              {isHost && !participant.isYou && (
+              {userEmail === hostEmail && participant.email !== userEmail && (
                 <button
                   onClick={() => handleKickout(participant.id)}
                   className={`p-1.5 rounded-full ${colors.buttonHover} transition-colors`}

@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Users,
   MonitorUp,
+  RefreshCw,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import {
@@ -71,6 +72,7 @@ export default function CodeEditor() {
   const [fontSize, setFontSize] = useState(14);
   const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
   const [engagementPanel, setEngagementPanel] = useState("none"); // "none", "chat", "participants"
+  const [isRunningCode, setIsRunningCode] = useState(false);
 
   const isDark = theme === "vs-dark" || theme === "hc-black";
 
@@ -143,6 +145,7 @@ export default function CodeEditor() {
   };
 
   async function runCode() {
+    setIsRunningCode(true);
     const code = editorRef.current.getValue();
     const codeResponse = await axios.post(
       "https://emkc.org/api/v2/piston/execute",
@@ -186,6 +189,7 @@ export default function CodeEditor() {
         );
       }
     }
+    setIsRunningCode(false);
   }
 
   const handleEditorChange = (value) => {
@@ -425,12 +429,21 @@ export default function CodeEditor() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
-                className={`rounded-lg p-3 ${colors.hover}`}
-                onClick={runCode}
-              >
-                <Play className="w-5 h-5" />
-              </button>
+              {isRunningCode ? (
+                <button
+                  disabled
+                  className={`rounded-lg p-3 ${colors.hover} cursor-not-allowed`}
+                >
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                </button>
+              ) : (
+                <button
+                  className={`rounded-lg p-3 ${colors.hover}`}
+                  onClick={runCode}
+                >
+                  <Play className="w-5 h-5" />
+                </button>
+              )}
             </TooltipTrigger>
             <TooltipContent>
               <p>Run Code</p>
@@ -577,7 +590,11 @@ export default function CodeEditor() {
                 Output
               </div>
               <div className="p-4 text-sm font-mono whitespace-pre-wrap">
-                {output || "// Run your code to see output here"}
+                {isRunningCode ? (
+                  <span>Running code...</span>
+                ) : (
+                  output || "// Run your code to see output here"
+                )}
                 {wsOutput && <div>{wsOutput}</div>}
               </div>
             </div>
@@ -586,7 +603,9 @@ export default function CodeEditor() {
           {/* Chat */}
           {engagementPanel !== "none" && (
             <div className={`col-span-3 border-l ${colors.border}`}>
-              {engagementPanel === "chat" && <Chat theme={theme} roomId={roomId} userEmail={userEmail} />}
+              {engagementPanel === "chat" && (
+                <Chat theme={theme} roomId={roomId} />
+              )}
               {engagementPanel === "participants" && (
                 <Participants theme={theme} isHost={true} />
               )}
