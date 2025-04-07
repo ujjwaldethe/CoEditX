@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import GenerateIdModal from "@/components/GenerateIdModal";
 import axios from "axios";
+import WaitingModal from "../components/WaitingModal";
 
 export default function Login() {
-  const navigate = useNavigate();
-
   const [roomId, setRoomId] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   async function handleJoinRoom() {
     if (!roomId || !email) {
@@ -29,13 +28,13 @@ export default function Login() {
 
     if (joinResponse.status === 200) {
       localStorage.setItem("code-editor-user-email", email);
-      navigate(`/editor/${roomId}`);
+      setIsDialogOpen(true);
     } else {
       console.log("Error while joining room");
     }
-
     setLoading(false);
   }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center relative">
       <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-pink-900/20"></div>
@@ -44,6 +43,12 @@ export default function Login() {
       <div className="w-96 bg-gray-900/50 p-6 rounded-3xl border-0 relative">
         <div className="absolute -top-6 -right-6 w-16 h-16 border-t-2 border-r-2 rounded-tr-xl border-pink-500"></div>
         <div className="absolute -bottom-6 -left-6 w-16 h-16 border-b-2 border-l-2 rounded-bl-xl border-pink-500"></div>
+        <WaitingModal
+          roomId={roomId}
+          email={email}
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+        />
 
         <div className="space-y-6">
           <div className="space-y-2">

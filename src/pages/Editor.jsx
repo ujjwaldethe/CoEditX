@@ -59,7 +59,6 @@ export default function CodeEditor() {
   const [output, setOutput] = useState("");
   const editorRef = useRef(null);
   const wsRef = useRef(null);
-  const [wsOutput, setWsOutput] = useState("");
   const fileInputRef = useRef(null);
 
   const [language, setLanguage] = useState({
@@ -132,7 +131,7 @@ export default function CodeEditor() {
       if (data.type === "content_update") {
         setActiveFile((prev) => ({ ...prev, content: data.content }));
       } else if (data.type === "output") {
-        setWsOutput(data.message);
+        setOutput(data.message);
       }
     };
     return () => {
@@ -595,7 +594,6 @@ export default function CodeEditor() {
                 ) : (
                   output || "// Run your code to see output here"
                 )}
-                {wsOutput && <div>{wsOutput}</div>}
               </div>
             </div>
           </div>
