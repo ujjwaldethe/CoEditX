@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, User } from "lucide-react";
 import axios from "axios";
+import VoiceCall from "../components/VoiceCall";
 
 export default function Chat({ theme, roomId }) {
   const userEmail = localStorage.getItem("code-editor-user-email");
@@ -207,7 +208,7 @@ export default function Chat({ theme, roomId }) {
           <span>{participants.length} participants</span>
         </div>
       </div>
-
+    
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {isLoading ? (
           <div className={`text-center ${colors.mutedText}`}>
@@ -299,6 +300,7 @@ export default function Chat({ theme, roomId }) {
           >
             <Send size={20} />
           </button>
+          <VoiceCall theme={theme} roomId={roomId} />
         </div>
       </form>
     </div>
