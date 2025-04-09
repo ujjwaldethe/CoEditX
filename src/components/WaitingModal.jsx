@@ -11,7 +11,6 @@ export default function WaitingModal({
   setIsDialogOpen,
 }) {
   const [waitTime, setWaitTime] = useState(0);
-  const [isHost, setIsHost] = useState(false);
 
   const navigate = useNavigate();
 

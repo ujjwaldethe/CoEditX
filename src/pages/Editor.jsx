@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import JSZip from "jszip";
 import {
   FolderClosed,
@@ -72,6 +73,7 @@ export default function CodeEditor() {
   const [activePanel, setActivePanel] = useState("files"); // "none", "files", "settings"
   const [engagementPanel, setEngagementPanel] = useState("none"); // "none", "chat", "participants"
   const [isRunningCode, setIsRunningCode] = useState(false);
+  const navigate = useNavigate();
 
   const isDark = theme === "vs-dark" || theme === "hc-black";
 
@@ -361,6 +363,35 @@ export default function CodeEditor() {
 
     return null;
   };
+
+  async function validateUser() {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_ENDPOINT}/validate-user`,
+      {
+        room_id: roomId,
+        email: localStorage.getItem("code-editor-user-email"),
+      }
+    );
+    if (response.status === 200) {
+      const message = response.data?.message || "";
+      if (message === "User is approved") {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  useEffect(() => {
+    let interval;
+    interval = setInterval(async () => {
+      const isValidated = await validateUser();
+      if (!isValidated) {
+        navigate("/");
+        clearInterval(interval);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <TooltipProvider>
