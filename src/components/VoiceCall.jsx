@@ -392,53 +392,7 @@ export default function VoiceCall({ theme, roomId, isHost = false }) {
   };
 
   return (
-    <div className={`w-full ${colors.background} flex flex-col`}>
-      <div className={`${colors.headerBg} h-9 p-2 border-b ${colors.border} flex items-center justify-between`}>
-        <h3 className={`${colors.headerText} text-md font-semibold`}>
-          Voice Call
-        </h3>
-        <div className={`${colors.mutedText} text-sm flex items-center gap-2`}>
-          <span className={`h-2 w-2 rounded-full ${isCallActive ? colors.activeIndicator : colors.inactiveIndicator}`}></span>
-          <span>{isCallActive ? "Active" : "Inactive"}</span>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Participants list */}
-        <div className="mb-4">
-          <h4 className={`${colors.headerText} text-sm font-medium mb-2`}>Participants ({participants.length})</h4>
-          <div className="space-y-2">
-            {participants.map(participant => (
-              <div key={participant.user_id} className={`flex items-center justify-between p-2 rounded ${colors.callControlBg}`}>
-                <div className="flex items-center">
-                  {participant.is_muted ? 
-                    <MicOff size={16} className="mr-2 text-red-500" /> : 
-                    <Mic size={16} className="mr-2 text-green-500" />
-                  }
-                  <span className={`${colors.headerText} text-sm`}>
-                    {getDisplayName(participant.email)}
-                    {participant.user_id === userId && " (You)"}
-                  </span>
-                </div>
-                
-                {/* Host controls */}
-                {isHost && participant.user_id !== userId && (
-                  <button 
-                    onClick={() => toggleParticipantMute(participant.user_id)}
-                    className={`p-1 rounded ${colors.buttonActiveBg} ${colors.buttonHover}`}
-                  >
-                    {participant.is_muted ? 
-                      <Volume2 size={16} className="text-white" /> : 
-                      <VolumeX size={16} className="text-white" />
-                    }
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
+    <div className="flex flex-col py-2">
       {/* Voice call controls */}
       <div className={`p-2 border-t ${colors.border} flex justify-center space-x-4`}>
         <button
@@ -447,8 +401,8 @@ export default function VoiceCall({ theme, roomId, isHost = false }) {
           disabled={mutedByHost && !isMuted}
         >
           {isCallActive ? 
-            (isMuted ? <MicOff size={20} /> : <Mic size={20} className="text-white" />) : 
-            <Mic size={20} className="text-white" />
+            (isMuted ? <MicOff size={14} /> : <Mic size={14} className="text-white" />) : 
+            <Mic size={14} className="text-white" />
           }
         </button>
         
@@ -457,7 +411,7 @@ export default function VoiceCall({ theme, roomId, isHost = false }) {
             onClick={endVoiceCall}
             className="p-2 rounded-full bg-red-500 hover:bg-red-600"
           >
-            <PhoneOff size={20} className="text-white" />
+            <PhoneOff size={14} className="text-white" />
           </button>
         )}
         
@@ -466,7 +420,7 @@ export default function VoiceCall({ theme, roomId, isHost = false }) {
             onClick={startVoiceCall}
             className="p-2 rounded-full bg-green-500 hover:bg-green-600"
           >
-            <Phone size={20} className="text-white" />
+            <Phone size={14} className="text-white" />
           </button>
         )}
       </div>

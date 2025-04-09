@@ -199,14 +199,7 @@ export default function Chat({ theme, roomId }) {
         <h3 className={`${colors.headerText} text-md font-semibold`}>
           Messages {isLoading && "(Loading...)"}
         </h3>
-        <div className={`${colors.mutedText} text-sm flex items-center gap-2`}>
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isConnected ? "bg-green-500" : "bg-red-500"
-            }`}
-          ></span>
-          <span>{participants.length} participants</span>
-        </div>
+        <VoiceCall  theme={theme} roomId={roomId} />
       </div>
     
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -300,7 +293,6 @@ export default function Chat({ theme, roomId }) {
           >
             <Send size={20} />
           </button>
-          <VoiceCall theme={theme} roomId={roomId} />
         </div>
       </form>
     </div>
