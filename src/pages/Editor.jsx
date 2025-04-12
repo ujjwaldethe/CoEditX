@@ -369,7 +369,7 @@ export default function CodeEditor() {
       `${import.meta.env.VITE_API_ENDPOINT}/validate-user`,
       {
         room_id: roomId,
-        email: localStorage.getItem("code-editor-user-email"),
+        email: localStorage.getItem("code-editor-user-email") || "",
       }
     );
     if (response.status === 200) {
