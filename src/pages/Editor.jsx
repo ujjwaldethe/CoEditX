@@ -38,6 +38,18 @@ const initialCode = `public class Main {
     // Write your code here
 `;
 
+const initialPythonCode = `# Function to add two numbers
+def add_numbers(num1, num2):
+    return num1 + num2
+
+# Input from user
+number1 = int(input("Enter the first number: "))
+number2 = int(input("Enter the second number: "))
+
+# Perform addition and display the result
+result = add_numbers(number1, number2)
+print(f"The sum of {number1} and {number2} is {result}")`;
+
 export default function CodeEditor() {
   const [fileTree, setFileTree] = useState({
     type: "folder",
@@ -58,6 +70,7 @@ export default function CodeEditor() {
     content: initialCode,
   });
   const [output, setOutput] = useState("");
+  const [userInput, setUserInput] = useState("");
   const editorRef = useRef(null);
   const wsRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -134,12 +147,71 @@ export default function CodeEditor() {
         setActiveFile((prev) => ({ ...prev, content: data.content }));
       } else if (data.type === "output") {
         setOutput(data.message);
+      } else if (data.type === "input_update") {
+        setUserInput(data.content);
       }
     };
     return () => {
       wsRef.current.close();
     };
   }, []);
+
+  // Handle language change and update sample code for Python
+  useEffect(() => {
+    if (language.language === "python") {
+      // Check if there's already a Python file in the file tree
+      const pythonFileExists = findFileByExtension(fileTree, ".py");
+      
+      if (!pythonFileExists) {
+        // Create a new Python file if one doesn't exist
+        const newFileTree = {
+          ...fileTree,
+          children: [
+            ...fileTree.children,
+            {
+              type: "file",
+              name: "main.py",
+              path: "/main.py",
+              content: initialPythonCode,
+            },
+          ],
+        };
+        
+        setFileTree(newFileTree);
+        
+        // Set the Python file as active
+        const pythonFile = {
+          path: "/main.py",
+          content: initialPythonCode,
+        };
+        
+        setActiveFile(pythonFile);
+      } else if (activeFile.path.endsWith('.py')) {
+        // If a Python file is active, do nothing
+      } else {
+        // If a Python file exists but is not active, set it as active
+        const pythonFile = findFileByExtension(fileTree, ".py");
+        if (pythonFile) {
+          setActiveFile(pythonFile);
+        }
+      }
+    }
+  }, [language]);
+
+  const findFileByExtension = (node, extension) => {
+    if (node.type === "file" && node.path.endsWith(extension)) {
+      return node;
+    }
+
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        const file = findFileByExtension(child, extension);
+        if (file) return file;
+      }
+    }
+
+    return null;
+  };
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -148,50 +220,82 @@ export default function CodeEditor() {
   async function runCode() {
     setIsRunningCode(true);
     const code = editorRef.current.getValue();
-    const codeResponse = await axios.post(
-      "https://emkc.org/api/v2/piston/execute",
-      {
-        language: language.language,
-        version: language.version,
-        files: [
-          {
-            content: code,
-          },
-        ],
-      }
-    );
-    const result = codeResponse.data;
-    if (result.run) {
-      const output = [
-        result.run.output ? `Output: ${result.run.output}` : "",
-        result.run.stderr ? `Error: ${result.run.stderr}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
+    
+    try {
+      const codeResponse = await axios.post(
+        "https://emkc.org/api/v2/piston/execute",
+        {
+          language: language.language,
+          version: language.version,
+          files: [
+            {
+              content: code,
+            },
+          ],
+          stdin: userInput, // Include user input for all languages
+        }
+      );
+      
+      const result = codeResponse.data;
+      if (result.run) {
+        const output = [
+          result.run.output ? `Output: ${result.run.output}` : "",
+          result.run.stderr ? `Error: ${result.run.stderr}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
 
-      setOutput(output);
-      // Send output to WebSocket
+        setOutput(output);
+        // Send output to WebSocket
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "output",
+              message: output,
+            })
+          );
+        }
+      } else {
+        setOutput("Error: Failed to execute code");
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "output",
+              message: "Error: Failed to execute code",
+            })
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error executing code:", error);
+      setOutput(`Error: ${error.message || "Failed to execute code"}`);
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(
           JSON.stringify({
             type: "output",
-            message: output, // Send the output message to the WebSocket server
+            message: `Error: ${error.message || "Failed to execute code"}`,
           })
         );
       }
-    } else {
-      setOutput("Error: Failed to execute code");
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(
-          JSON.stringify({
-            type: "output",
-            message: "Error: Failed to execute code", // Send the error message to the WebSocket server
-          })
-        );
-      }
+    } finally {
+      setIsRunningCode(false);
     }
-    setIsRunningCode(false);
   }
+
+  const handleInputChange = (e) => {
+    const newInput = e.target.value;
+    setUserInput(newInput);
+    
+    // Send input update to WebSocket
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "input_update",
+          content: newInput,
+        })
+      );
+    }
+  };
 
   const handleEditorChange = (value) => {
     setActiveFile((prev) => ({ ...prev, content: value }));
@@ -392,6 +496,23 @@ export default function CodeEditor() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  // Helper function to get input placeholder text based on language
+  const getInputPlaceholder = () => {
+    switch (language.language) {
+      case 'python':
+        return "Enter input values here, each on a new line...";
+      case 'java':
+        return "Enter input for System.in, each on a new line...";
+      case 'javascript':
+        return "Enter input for process.stdin, each on a new line...";
+      case 'cpp':
+      case 'c':
+        return "Enter input for stdin, each on a new line...";
+      default:
+        return "Enter program input, each on a new line...";
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -608,9 +729,32 @@ export default function CodeEditor() {
               />
             </div>
 
+            {/* Input section for all languages */}
+            <div className={`border-t ${colors.border} ${colors.background}`}>
+              <div
+                className={`px-4 py-2 text-sm ${
+                  isDark ? "bg-[#252526]" : "bg-gray-100"
+                }`}
+              >
+                Input
+              </div>
+              <div className="p-2">
+                <textarea
+                  className={`w-full h-24 p-2 ${
+                    isDark ? "bg-[#1e1e1e] text-gray-300" : "bg-white text-gray-800"
+                  } border ${
+                    isDark ? "border-gray-700" : "border-gray-300"
+                  } rounded text-sm font-mono`}
+                  placeholder={getInputPlaceholder()}
+                  value={userInput}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
             {/* Output Console */}
             <div
-              className={`h-32 border-t ${colors.border} ${colors.background} overflow-y-auto`}
+              className={`h-64 border-t ${colors.border} ${colors.background} overflow-y-auto`}
             >
               <div
                 className={`px-4 py-2 text-sm ${
