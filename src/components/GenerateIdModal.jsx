@@ -13,9 +13,25 @@ import axios from "axios";
 export default function GenerateIdModal({ email, setEmail, setRoomId }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
 
   async function generateUniqueId() {
     try {
+      if (!email) {
+        setEmailError("Email is required");
+        return null;
+      }
+      
+      if (!isValidEmail(email)) {
+        setEmailError("Please enter a valid email address");
+        return null;
+      }
+      
       setLoading(true);
       const response = await axios.post(
         `${import.meta.env.VITE_API_ENDPOINT}/generate-room-id`,
@@ -50,10 +66,18 @@ export default function GenerateIdModal({ email, setEmail, setRoomId }) {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-800/50 border-0 text-white placeholder-gray-400 focus:ring-pink-500"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError("");
+              }}
+              className={`w-full bg-gray-800/50 border-0 text-white placeholder-gray-400 focus:ring-pink-500 ${
+                emailError ? "border border-red-500" : ""
+              }`}
               placeholder="Enter your email"
             />
+            {emailError && (
+              <p className="text-red-500 text-xs mt-1">{emailError}</p>
+            )}
           </div>
           <Button
             type="button"

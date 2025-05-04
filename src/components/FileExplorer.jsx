@@ -213,7 +213,7 @@ export default function FileExplorer({
   }
 
   return (
-    <div className="w-full h-screen overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h2 className={`${colors.textMuted} text-sm font-semibold`}>FILES</h2>
         <div className="flex space-x-2">

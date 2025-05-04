@@ -645,7 +645,7 @@ export default function CodeEditor() {
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-10">
+        <div className="max-h-screen flex-1 grid grid-cols-10">
           {activePanel !== "none" && (
             <div
               className={`col-span-2 p-4 border-r ${colors.border} ${
@@ -679,7 +679,7 @@ export default function CodeEditor() {
 
           {/* Main Editor Area */}
           <div
-            className={`flex flex-col ${
+            className={`flex flex-col max-h-screen ${
               activePanel === "none"
                 ? engagementPanel !== "none"
                   ? "col-span-7"
