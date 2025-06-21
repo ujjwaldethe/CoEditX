@@ -8,7 +8,7 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
-import axios from "axios";
+import axios from "axios"; //fires http req asynchrnously to the backend 
 
 export default function GenerateIdModal({ email, setEmail, setRoomId }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

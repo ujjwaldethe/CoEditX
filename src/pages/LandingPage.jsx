@@ -122,7 +122,7 @@ export default function LandingPage() {
           <div className="bg-gray-900/60 border border-white/5 rounded-2xl p-10 text-center">
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
               CoEditX brings the simplicity of collaborative platforms like
-              Google Meet to the world of coding. Whether youre teaching, pair
+              Google Meet to the world of coding. Whether you are teaching, pair
               programming, or working on a distributed team, our real-time
               editor makes coding together effortless.
             </p>
@@ -143,20 +143,20 @@ export default function LandingPage() {
             <div className="flex animate-bounce mb-8">
               <div className="mx-8 text-gray-400">
                 <span className="text-teal-400">
-                  Late G N Sapkal Collage of engineering
+                  Late G N Sapkal Collage Of Engineering
                 </span>
               </div>
               <div className="mx-8 text-gray-400">
                 <span className="text-teal-400">Mahesh Sanap</span>
               </div>
               <div className="mx-8 text-gray-400">
-                <span className="text-teal-400">Ujjwal dethe</span>
+                <span className="text-teal-400">Ujjwal Dethe</span>
               </div>
               <div className="mx-8 text-gray-400">
                 <span className="text-teal-400">Pratik Chaudhari</span>
               </div>
               <div className="mx-8 text-gray-400">
-                <span className="text-teal-400">Swaraj deshmukh</span>
+                <span className="text-teal-400">Swaraj Deshmukh</span>
               </div>
             </div>
           </div>

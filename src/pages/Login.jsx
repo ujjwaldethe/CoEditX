@@ -102,7 +102,7 @@ export default function Login() {
             {loading ? "Joining..." : "Join"}           
           </Button>            
           
-          <GenerateIdModal             
+          <GenerateIdModal         //Wrapper for GenerateIdModal component    
             email={email}             
             setEmail={setEmail}             
             setRoomId={setRoomId}           
